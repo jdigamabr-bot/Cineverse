@@ -1,1 +1,114 @@
+<escape><!DOCTYPE html>
 
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#080713">
+<title>CINEVERSE — Beyond the Screen</title>
+<style>
+*{box-sizing:border-box} :root{--bg:#080713;--panel:#151326;--purple:#a78bfa;--muted:#aaa6c4}
+body{margin:0;background:var(--bg);color:white;font-family:Arial,sans-serif}
+header{height:72px;padding:0 5%;display:flex;align-items:center;justify-content:space-between;background:#0e0c1cf2;border-bottom:1px solid #29213f;position:sticky;top:0;z-index:10}
+.logo{font-weight:900;font-size:23px;letter-spacing:2px;color:#c4b5fd}.logo span{color:white}
+nav{display:flex;gap:18px}nav a{color:#d4d0e8;text-decoration:none;font-size:13px}
+.hero{padding:65px 6% 45px;background:radial-gradient(ellipse at 75% 15%,#50308077,transparent 55%),linear-gradient(120deg,#15102b,#080713 75%)}
+.tag{color:#c4b5fd;font-size:11px;letter-spacing:3px;font-weight:bold}
+h1{font-size:clamp(38px,8vw,72px);line-height:1.02;margin:18px 0;letter-spacing:-2px}
+h1 span{color:#b7a0ff}.hero p{color:#c0bbd6;max-width:470px;line-height:1.7;font-size:15px}
+.search{display:flex;gap:9px;max-width:590px;margin-top:25px}
+input{width:100%;min-width:0;background:#19162b;border:1px solid #51436f;border-radius:10px;padding:15px;color:white;font-size:15px;outline:none}
+button{cursor:pointer;border:0;border-radius:10px;padding:14px 19px;background:linear-gradient(135deg,#9b7bff,#6c45d9);color:white;font-weight:bold}
+.pills{display:flex;gap:9px;flex-wrap:wrap;margin-top:24px}
+.pills button{background:#201a36;border:1px solid #40345c;padding:9px 13px;font-size:12px}
+.pills button.active{background:#7352cc}
+main{padding:28px 5% 50px}
+.sectionhead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:10px 0 20px}
+h2{font-size:22px;margin:0}.hint{font-size:12px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.card{min-width:0;background:var(--panel);border:1px solid #28213f;border-radius:13px;overflow:hidden;transition:.2s}
+.card:active{transform:scale(.98)}.poster{width:100%;aspect-ratio:2/3;object-fit:cover;display:block;background:#252039}
+.details{padding:11px}.details h3{font-size:14px;margin:0 0 8px;line-height:1.35}
+.meta{font-size:11px;color:#b7b0d2;margin-bottom:10px}.rating{color:#facc15}
+.details button{width:100%;padding:10px;font-size:12px}
+#status{color:#c2badc;padding:15px 0;font-size:14px}
+.feature{margin-top:35px;padding:24px;border:1px solid #382b58;border-radius:16px;background:linear-gradient(135deg,#211638,#111020)}
+.feature h2{margin-bottom:10px}.feature p{font-size:14px;line-height:1.7;color:#c2bad7}
+.feature .play{display:inline-block;margin-top:8px}
+footer{text-align:center;padding:28px;color:#85809f;border-top:1px solid #211c34;font-size:12px}
+dialog{background:#151326;color:white;border:1px solid #51406f;border-radius:15px;width:90%;max-width:480px;padding:20px}
+dialog::backdrop{background:#000c}.modalposter{width:100px;border-radius:9px;float:left;margin:0 15px 10px 0}
+#modalText{font-size:14px;line-height:1.7;color:#d3cde8}.close{float:right;background:#39304d;padding:9px 12px}
+@media(min-width:650px){.grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:20px}.hero{padding-top:90px}.hero p{font-size:17px}}
+</style>
+</head>
+<body>
+<header><div class="logo">✦ CINE<span>VERSE</span></div><nav><a href="#discover">Discover</a><a href="#watch">Watch</a></nav></header>
+<section class="hero">
+<div class="tag">YOUR PERSONAL CINEMA UNIVERSE</div>
+<h1>Every story.<br><span>One universe.</span></h1>
+<p>Discover your next obsession. Explore movies, uncover stories, and find where to watch.</p>
+<form class="search" id="searchForm"><input id="query" placeholder="Search any movie..." aria-label="Movie title" required><button>Search ↗</button></form>
+<div class="pills"><button class="active" data-type="popular">🔥 Popular</button><button data-type="top">⭐ Top Rated</button><button data-type="upcoming">✨ Upcoming</button></div>
+</section>
+<main id="discover">
+<div class="sectionhead"><h2 id="heading">Trending in the Universe</h2><span class="hint">DISCOVER • EXPLORE</span></div>
+<div id="status">Loading movie collection…</div><div class="grid" id="grid"></div>
+<section class="feature" id="watch"><div class="tag">YOUR NEXT WATCH</div><h2>From discovery to movie night.</h2><p>Open a movie to explore its story and rating. When an authorised full-movie source is connected, its available playback or download options can appear here.</p><button class="play" onclick="document.getElementById('query').focus();window.scrollTo({top:0,behavior:'smooth'})">Find a Movie ↗</button></section>
+</main>
+<footer>✦ CINEVERSE · DISCOVER YOUR NEXT WORLD<br><br>Movie information and artwork load from a public movie data source when available.</footer>
+<dialog id="modal"><button class="close" onclick="document.getElementById('modal').close()">✕</button><div id="modalBody"></div></dialog>
+<script>
+const grid=document.getElementById('grid'),statusBox=document.getElementById('status');
+const heading=document.getElementById('heading');
+let mode='popular',currentQuery='';
+const samples=[
+{title:'Interstellar',year:'2014',rating:'8.7',overview:'A team travels beyond this galaxy to discover whether mankind has a future among the stars.',poster:'https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg'},
+{title:'Inception',year:'2010',rating:'8.4',overview:'A skilled thief enters dreams to steal secrets and faces a mission unlike any other.',poster:'https://image.tmdb.org/t/p/w500/oYuLEt3zVCKq57qu2F8dT7NIa6f.jpg'},
+{title:'The Dark Knight',year:'2008',rating:'9.0',overview:'Batman faces a criminal mastermind who pushes Gotham into chaos.',poster:'https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg'},
+{title:'Dune: Part Two',year:'2024',rating:'8.5',overview:'Paul Atreides unites with Chani and the Fremen while seeking revenge.',poster:'https://image.tmdb.org/t/p/w500/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg'}
+];
+function showSamples(message='Explore these sample movie cards while live search is being connected.'){
+grid.innerHTML='';statusBox.textContent=message;
+samples.forEach(m=>grid.appendChild(makeCard(m)));
+}
+function makeCard(m){
+const card=document.createElement('article');card.className='card';
+const img=document.createElement('img');img.className='poster';img.alt=m.title+' poster';img.src=m.poster;
+img.onerror=()=>{img.style.display='none'};
+const info=document.createElement('div');info.className='details';
+const title=document.createElement('h3');title.textContent=m.title;
+const meta=document.createElement('div');meta.className='meta';meta.innerHTML='<span class="rating">★ '+m.rating+'</span>　'+m.year;
+const btn=document.createElement('button');btn.textContent='View Details';btn.onclick=()=>showDetail(m);
+info.append(title,meta,btn);card.append(img,info);return card;
+}
+function showDetail(m){
+const modal=document.getElementById('modal'),body=document.getElementById('modalBody');body.innerHTML='';
+if(m.poster){const img=document.createElement('img');img.className='modalposter';img.src=m.poster;img.alt='';body.append(img)}
+const title=document.createElement('h2');title.textContent=m.title;
+const meta=document.createElement('p');meta.className='meta';meta.textContent='Release: '+(m.year||'Unknown')+' · Rating: '+(m.rating||'N/A');
+const story=document.createElement('p');story.id='modalText';story.textContent=m.overview||'Movie synopsis unavailable.';
+const note=document.createElement('p');note.id='modalText';note.textContent='Full-movie playback will be available when a licensed or otherwise authorised source is connected.';
+body.append(title,meta,story,note);modal.showModal();
+}
+async function searchMovies(query='',type='popular'){
+heading.textContent=query?'Results for “'+query+'”':type==='top'?'Top Rated Movies':type==='upcoming'?'Coming Soon':'Trending in the Universe';
+grid.innerHTML='';statusBox.textContent='Searching movie database…';
+try{
+let url='https://api.themoviedb.org/3/movie/'+(type==='top'?'top_rated':type==='upcoming'?'upcoming':'popular');
+if(query)url='https://api.themoviedb.org/3/search/movie?query='+encodeURIComponent(query);
+const res=await fetch(url);
+if(!res.ok)throw Error('Movie service unavailable');
+const data=await res.json();
+const results=data.results||[];
+if(!results.length){statusBox.textContent='No matching movies found. Try another title.';return}
+statusBox.textContent=results.length+' results found';
+results.forEach(m=>grid.appendChild(makeCard({title:m.title,year:(m.release_date||'').slice(0,4),rating:m.vote_average?m.vote_average.toFixed(1):'N/A',overview:m.overview,poster:m.poster_path?'https://image.tmdb.org/t/p/w500'+m.poster_path:''})));
+}catch(e){showSamples('Live movie search is not connected yet. Sample cards are shown below.');}
+}
+document.getElementById('searchForm').addEventListener('submit',e=>{e.preventDefault();const q=document.getElementById('query').value.trim();if(q)searchMovies(q)});
+document.querySelectorAll('[data-type]').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('[data-type]').forEach(b=>b.classList.remove('active'));btn.classList.add('active');searchMovies('',btn.dataset.type)}));
+showSamples();
+</script>
+</body>
+</html></escape>
